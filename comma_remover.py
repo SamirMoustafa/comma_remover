@@ -15,10 +15,31 @@ def remove_trailing_commas(content: str) -> str:
     return content
 
 
+def _is_under_dot_prefixed_directory(path: Path, root: Path) -> bool:
+    """
+    True if path sits under a directory whose name starts with '.' (e.g. .venv, .pixi).
+    Only directory segments are checked, not the filename.
+    """
+    root = root.resolve()
+    path = path.resolve()
+    rp = root.parts
+    pp = path.parts
+    if len(pp) <= len(rp) or pp[: len(rp)] != rp:
+        return False
+    for part in pp[len(rp) : -1]:
+        if part.startswith(".") and part not in (".", ".."):
+            return True
+    return False
+
+
 def iter_python_files(target: Path):
     """Yield Python files from a file or directory target."""
     if target.is_dir():
-        yield from target.rglob("*.py")
+        root = target.resolve()
+        for file_path in target.rglob("*.py"):
+            if _is_under_dot_prefixed_directory(file_path, root):
+                continue
+            yield file_path
     else:
         yield target
 
@@ -49,10 +70,7 @@ def main(argv=None) -> int:
         return 1
 
     for file_path in iter_python_files(target):
-        try:
-            process_file(file_path)
-        except Exception as error:
-            print(f"❌ Skipped {file_path}: {error}")
+        process_file(file_path)
 
     return 0
 
