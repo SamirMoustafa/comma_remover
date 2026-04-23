@@ -32,7 +32,7 @@ def remove_trailing_commas(content: str) -> str:
 def _is_under_dot_prefixed_directory(path: Path, root: Path) -> bool:
     """
     True if path sits under a directory whose name starts with '.' (e.g. .venv, .pixi).
-    Only directory segments are checked, not the filename.
+    Directory segments after `root` are checked (including the immediate child like `.venv`).
     """
     root = root.resolve()
     path = path.resolve()
@@ -40,7 +40,7 @@ def _is_under_dot_prefixed_directory(path: Path, root: Path) -> bool:
     pp = path.parts
     if len(pp) <= len(rp) or pp[: len(rp)] != rp:
         return False
-    for part in pp[len(rp) : -1]:
+    for part in pp[len(rp) :]:
         if part.startswith(".") and part not in (".", ".."):
             return True
     return False
@@ -53,7 +53,7 @@ def _is_under_excluded_directory(path: Path, root: Path, excluded_dirs: set[str]
     pp = path.parts
     if len(pp) <= len(rp) or pp[: len(rp)] != rp:
         return False
-    for part in pp[len(rp) : -1]:
+    for part in pp[len(rp) :]:
         if part in excluded_dirs:
             return True
     return False
